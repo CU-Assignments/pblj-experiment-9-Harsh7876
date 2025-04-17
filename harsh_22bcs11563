@@ -1,0 +1,117 @@
+1.Develop a Hibernate-based application to perform CRUD (Create, Read, Update, Delete) operations on a Student entity using Hibernate ORM with MySQL.
+Requirements:
+1.	Configure Hibernate using hibernate.cfg.xml.
+2.	Create an Entity class (Student.java) with attributes: id, name, and age.
+3.	Implement Hibernate SessionFactory to perform CRUD operations.
+4.	Test the CRUD functionality with sample data
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "students")
+class Student {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    private String name;
+    private int age;
+
+    public Student() {}
+    public Student(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    // Getters & Setters
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public int getAge() { return age; }
+    public void setId(int id) { this.id = id; }
+    public void setName(String name) { this.name = name; }
+    public void setAge(int age) { this.age = age; }
+}
+
+public class HibernateCRUD {
+    private static SessionFactory factory;
+
+    public static void main(String[] args) {
+        try {
+            Configuration cfg = new Configuration();
+            cfg.configure("hibernate.cfg.xml");
+            cfg.addAnnotatedClass(Student.class);
+            factory = cfg.buildSessionFactory();
+        } catch (Throwable ex) {
+            System.err.println("Failed to create sessionFactory object." + ex);
+            throw new ExceptionInInitializerError(ex);
+        }
+
+        HibernateCRUD crud = new HibernateCRUD();
+
+        // CREATE
+        Student s1 = new Student("Harsh Sharma", 20);
+        crud.createStudent(s1);
+
+        // READ
+        Student s2 = crud.getStudent(s1.getId());
+
+        // UPDATE
+        if (s2 != null) {
+            s2.setAge(21);
+            crud.updateStudent(s2);
+        }
+
+        // DELETE
+        crud.deleteStudent(s1.getId());
+
+        factory.close();
+    }
+
+    public void createStudent(Student student) {
+        Session session = factory.openSession();
+        Transaction tx = session.beginTransaction();
+        session.save(student);
+        tx.commit();
+        session.close();
+        System.out.println("Student Created: " + student.getName());
+    }
+
+    public Student getStudent(int id) {
+        Session session = factory.openSession();
+        Student student = session.get(Student.class, id);
+        session.close();
+        System.out.println("Student Read: " + (student != null ? student.getName() : "Not Found"));
+        return student;
+    }
+
+    public void updateStudent(Student student) {
+        Session session = factory.openSession();
+        Transaction tx = session.beginTransaction();
+        session.update(student);
+        tx.commit();
+        session.close();
+        System.out.println("Student Updated: " + student.getName() + " Age: " + student.getAge());
+    }
+
+    public void deleteStudent(int id) {
+        Session session = factory.openSession();
+        Transaction tx = session.beginTransaction();
+        Student student = session.get(Student.class, id);
+        if (student != null) {
+            session.delete(student);
+            System.out.println("Student Deleted: " + student.getName());
+        } else {
+            System.out.println("Student Not Found for Deletion");
+        }
+        tx.commit();
+        session.close();
+    }
+}
+OUTPUT
+Student Created: Harsh Sharma
+Student Read: Harsh Sharma
+Student Updated: Harsh Sharma Age: 21
+Student Deleted: Harsh Sharma
